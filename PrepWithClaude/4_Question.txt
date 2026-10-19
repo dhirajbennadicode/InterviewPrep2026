@@ -1,0 +1,32 @@
+Day 4 — 2026-09-06
+
+Topic: Bitfield / register manipulation (memory-mapped I/O) Category: Embedded fundamentals / hardware register access Status: Assigned, awaiting submission
+
+Problem given to user:
+
+Write a small set of functions/macros for manipulating bits in a memory-mapped hardware register, the kind of code that sits directly beneath a peripheral driver (GPIO, UART control register, interrupt status register, etc.).
+
+Requirements:
+
+Assume a 32-bit register at a fixed address, accessed through a pointer such as volatile uint32_t *reg. Implement:
+void reg_set_bits(volatile uint32_t *reg, uint32_t mask); — set the bits in mask to 1 without disturbing other bits.
+void reg_clear_bits(volatile uint32_t *reg, uint32_t mask); — clear the bits in mask to 0 without disturbing other bits.
+void reg_toggle_bits(volatile uint32_t *reg, uint32_t mask); — flip the bits in mask.
+bool reg_test_bits(volatile uint32_t *reg, uint32_t mask); — return whether all bits in mask are currently set.
+Define bit positions with named constants/macros rather than magic numbers (e.g., #define UART_CTRL_TX_EN (1u << 3)), and demonstrate combining several named bits into one operation.
+Explain precisely where volatile needs to go for a pointer to a hardware register (volatile uint32_t *reg vs uint32_t *volatile reg vs volatile uint32_t *volatile reg) and which mistake is most common and why it silently breaks optimization assumptions.
+Discuss why a plain set/clear/toggle (read-modify-write) sequence is not atomic, and construct a concrete scenario where an ISR firing between the read and the write of an RMW sequence corrupts a bit that the main loop was trying to set — then say what you'd do to prevent it (disabling interrupts around the RMW, or a hardware bit-band/atomic-set-clear register if the MCU has one).
+Discuss "write-1-to-clear" (W1C) status/interrupt-flag registers, common on real peripherals: writing 0 does nothing, writing 1 clears that specific flag bit, and a naive read-modify-write on this kind of register can accidentally clear flags it never meant to touch. Explain how you'd write a correct "clear this one interrupt flag" function for a W1C register, and why it looks different from reg_clear_bits above.
+Briefly discuss C bitfields (struct { uint32_t en : 1; uint32_t mode : 2; ... }; mapped onto a register) as an alternative to masks/shifts, and why most embedded codebases avoid them for hardware register access (implementation-defined bit order and packing, no portability guarantee across compilers/architectures) even though they're convenient to read.
+
+What this question is testing (learning objectives):
+
+Correct, idiomatic bit manipulation: masks, shifts, named constants instead of magic numbers — baseline fluency expected of any embedded candidate.
+Precise understanding of volatile placement on pointer types and what each variant actually qualifies (the pointer vs. the pointee) — a very common interview gotcha.
+Recognizing that read-modify-write on a register is not atomic and reasoning concretely about ISR-vs-main-loop races on shared hardware state, plus knowing the standard mitigations (critical sections, hardware atomic set/clear registers).
+Familiarity with real peripheral semantics beyond plain read/write registers — write-1-to-clear, write-1-to-set, read-only and reserved bits — since these show up constantly in real datasheets and trip up candidates who only ever practiced with "normal" memory.
+Judgment about portability: knowing why C bitfields are popular in textbooks but distrusted in production embedded code for hardware register mapping.
+
+No solution was provided — user is implementing it themselves and will submit code for review.
+
+Review notes: (to be filled in after user submits)
